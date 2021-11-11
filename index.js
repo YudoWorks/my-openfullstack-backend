@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 
 const app = express()
 
-mongoose.connect(process.env.MONGO_ATLAS_URL)
+mongoose.connect(process.env.MONGO_ATLAS_URI)
 
 const noteSchema = new mongoose.Schema({
     content: String,
