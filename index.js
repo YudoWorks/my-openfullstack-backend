@@ -1,5 +1,18 @@
+require('dotenv').config()
 const express = require('express')
+const mongoose = require('mongoose')
+
 const app = express()
+
+mongoose.connect(process.env.MONGO_ATLAS_URL)
+
+const noteSchema = new mongoose.Schema({
+    content: String,
+    date: Date,
+    important: Boolean
+})
+
+const Note = mongoose.model('Note', noteSchema)
 
 app.use(express.json())
 
@@ -40,7 +53,9 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/notes', (request, response) => {
-    response.json(notes)
+    Note.find({}).then( notes => {
+        response.json(notes)
+    })
 })
 
 app.get('/api/notes/:id', (request, response) => {    
@@ -94,6 +109,6 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT)
 console.log(`Server running on PORT ${PORT}`);
