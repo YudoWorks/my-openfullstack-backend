@@ -8,9 +8,14 @@
 | ------ | ------ |
 | node | v14.17.6 |
 
-
 ## How To Run
 
 ```sh
 npm start
+```
+
+## How To Run In Development mode
+
+```sh
+npm run dev
 ```
