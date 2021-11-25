@@ -46,6 +46,16 @@ const requestLogger = (request, response, next) => {
     next()
 }
 
+const errorHandler = (error, request, response, next )=> {
+    console.error(error.message)
+
+    if(error.name = 'CastError'){
+        response.status(400).json({error: 'malformatted id'})
+    }
+
+    next(error)
+}
+
 app.use(requestLogger)
 
 app.get('/', (request, response) => {
@@ -58,11 +68,8 @@ app.get('/api/notes', (request, response) => {
     })
 })
 
-app.get('/api/notes/:id', (request, response) => {    
-    Note.findById(request.params.id).then(note => response.json(note)).catch(error => {
-        console.log(error);
-        response.status(400).json({error: 'malformatted id'})
-    })
+app.get('/api/notes/:id', (request, response, next) => {    
+    Note.findById(request.params.id).then(note => response.json(note)).catch(error => next(error))
 })
 
 app.delete('/api/notes/:id', (request, response) => {
@@ -101,6 +108,7 @@ const unknownEndpoint = (request, response) => {
 }
 
 app.use(unknownEndpoint)
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT)
