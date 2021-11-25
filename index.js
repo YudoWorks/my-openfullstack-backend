@@ -59,7 +59,10 @@ app.get('/api/notes', (request, response) => {
 })
 
 app.get('/api/notes/:id', (request, response) => {    
-    Note.findById(request.params.id).then(note => response.json(note))
+    Note.findById(request.params.id).then(note => response.json(note)).catch(error => {
+        console.log(error);
+        response.status(400).json({error: 'malformatted id'})
+    })
 })
 
 app.delete('/api/notes/:id', (request, response) => {
