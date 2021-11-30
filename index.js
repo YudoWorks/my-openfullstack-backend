@@ -1,92 +1,10 @@
-require('dotenv').config()
-const express = require('express')
-const mongoose = require('mongoose')
+const app = require('./app')
+const http = require('http')
+const config = require('./utils/config')
+const logger = require('./utils/logger')
 
-const app = express()
+const server = http.createServer(app)
 
-mongoose.connect(process.env.MONGO_ATLAS_URI)
-
-const noteSchema = new mongoose.Schema({
-  content: {
-    type: String,
-    minlength: 5,
-    required: true
-  },
-  date: {
-    type: Date,
-    required: true
-  },
-  important: Boolean
+server.listen(config.PORT, () => {
+  logger.info(`Server running on port ${config.PORT}`)
 })
-
-const Note = mongoose.model('Note', noteSchema)
-
-app.use(express.json())
-
-const requestLogger = (request, response, next) => {
-  console.log('Method', request.method)
-  console.log('Path: ', request.path)
-  console.log('Body: ', request.body)
-  console.log('================================')
-
-  next()
-}
-
-const errorHandler = (error, request, response, next ) => {
-  console.error(error.message)
-
-  if(error.name === 'CastError'){
-    response.status(400).json({ error: 'malformatted id' })
-  }else if(error.name === 'ValidationError'){
-    response.status(400).json({ error: error.name })
-  }
-
-  next(error)
-}
-
-app.use(requestLogger)
-
-app.get('/', (request, response) => {
-  response.send('<h1> Hello World </h1>')
-})
-
-app.get('/api/notes', (request, response) => {
-  Note.find({}).then( notes => {
-    response.json(notes)
-  })
-})
-
-app.get('/api/notes/:id', (request, response, next) => {
-  Note.findById(request.params.id).then(note => response.json(note)).catch(error => next(error))
-})
-
-app.delete('/api/notes/:id', (request, response) => {
-  Note.deleteOne({ id: request.params.id }).then(deletedNote => response.json(deletedNote))
-})
-
-app.post('/api/notes', (request, response, next) => {
-  const body = request.body
-
-  const note = new Note({
-    content: body.content,
-    important: body.important || false,
-    date: new Date(),
-  })
-
-  note.save().then(savedNote => {
-    response.json(savedNote)
-  }).catch(error => {
-    next(error)
-  })
-})
-
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ message: 'unknown endpoint' })
-}
-
-app.use(unknownEndpoint)
-app.use(errorHandler)
-
-const PORT = process.env.PORT
-app.listen(PORT)
-console.log(`Server running on PORT ${PORT}`)
