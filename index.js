@@ -7,8 +7,15 @@ const app = express()
 mongoose.connect(process.env.MONGO_ATLAS_URI)
 
 const noteSchema = new mongoose.Schema({
-    content: String,
-    date: Date,
+    content: {
+        type: String,
+        minlength: 5,   
+        required: true
+    },
+    date: {
+        type: Date,
+        required: true
+    },
     important: Boolean
 })
 
@@ -49,8 +56,10 @@ const requestLogger = (request, response, next) => {
 const errorHandler = (error, request, response, next )=> {
     console.error(error.message)
 
-    if(error.name = 'CastError'){
+    if(error.name === 'CastError'){
         response.status(400).json({error: 'malformatted id'})
+    }else if(error.name === 'ValidationError'){
+        response.status(400).json({error: error.name})
     }
 
     next(error)
@@ -82,14 +91,8 @@ const generateId = () => {
     return maxId + 1
 }
 
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', (request, response, next) => {
     const body = request.body
-
-    if(!body.content){
-        return response.status(404).json({
-            error: 'content missing'
-        })
-    }
 
     const note = new Note({
         content: body.content,
@@ -100,6 +103,8 @@ app.post('/api/notes', (request, response) => {
 
     note.save().then(savedNote => {
         response.json(savedNote)
+    }).catch(error => {
+        next(error)
     })
 })
 
